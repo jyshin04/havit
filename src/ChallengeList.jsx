@@ -1,47 +1,43 @@
 import React, { useState } from "react";
 
 export default function ChallengeList({ challenges, onSelect }) {
-  const [openDropdown, setOpenDropdown] = useState(null);
+  const [openDropdowns, setOpenDropdowns] = useState([]);
 
   const handleDropdown = (id) => {
-    setOpenDropdown((prev) => (prev === id ? null : id));
+    setOpenDropdowns((prev) =>
+      prev.includes(id)
+        ? prev.filter(openId => openId !== id)
+        : [...prev, id]
+    );
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full max-w-2xl mx-auto mt-12 px-2 md:px-4">
+    <div className="w-full max-w-5xl mx-auto mt-12 px-2 md:px-4">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 text-center mb-8">Challenges</h1>
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
       {challenges.map((challenge) => (
-        <div key={challenge.id} className="relative">
-          <div className={`bg-white p-6 flex items-center gap-6 transition relative pointer-events-none ${openDropdown === challenge.id ? 'rounded-t-2xl rounded-b-none' : 'rounded-2xl'}`}>
+        <div key={challenge.id} className="relative group">
+          <div className={`bg-white flex flex-col items-center transition relative pointer-events-none ${openDropdowns.includes(challenge.id) ? 'rounded-t-2xl rounded-b-none' : 'rounded-2xl'} shadow group-hover:shadow-lg group-hover:ring-2 group-hover:ring-rose-100 p-0 pb-4`}> 
             <img
               src={challenge.image}
               alt={challenge.product}
-              className="w-20 h-20 rounded-xl object-cover"
+              className="w-full h-48 object-cover rounded-t-2xl"
+              style={{objectPosition: 'center'}}
             />
-            <div className="flex-1 pointer-events-none pr-16 text-center">
-              <h2 className="text-base font-semibold text-gray-900 mb-1">{challenge.product}</h2>
-              <p className="text-gray-700 text-xs mb-2">{challenge.description}</p>
-
+            <div className="flex-1 pointer-events-none text-center w-full px-6 pt-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-1">{challenge.product}</h2>
+              <p className="text-gray-700 text-sm mb-2">{challenge.description}</p>
             </div>
-            <div className="absolute top-0 left-0 h-full" style={{ width: '80%' }}>
-              <div
-                className="w-full h-full cursor-pointer pointer-events-auto"
-                onClick={() => handleDropdown(challenge.id)}
-              />
-            </div>
-            <div className="absolute top-0 right-0 h-full flex items-center justify-center" style={{ width: '20%' }}>
-              <div
-                className="w-full h-full flex items-center justify-center cursor-pointer pointer-events-auto"
-                onClick={(e) => { e.stopPropagation(); onSelect(challenge); }}
-              >
-                <svg className="w-7 h-7 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
-                </svg>
-              </div>
+            <div className="absolute top-0 left-0 w-full h-48 cursor-pointer pointer-events-auto" onClick={() => handleDropdown(challenge.id)} />
+            <div className="absolute top-4 right-4 flex items-center justify-center cursor-pointer pointer-events-auto bg-white bg-opacity-70 rounded-full shadow p-1" onClick={(e) => { e.stopPropagation(); onSelect(challenge); }}>
+              <svg className="w-7 h-7 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 6l6 6-6 6" />
+              </svg>
             </div>
           </div>
           {/* Dropdown below card, in normal flow */}
-          <div className="overflow-hidden transition-all duration-300" style={{maxHeight: openDropdown === challenge.id ? 200 : 0, opacity: openDropdown === challenge.id ? 1 : 0}}>
-            {openDropdown === challenge.id && (
+          <div className="overflow-hidden transition-all duration-300" style={{maxHeight: openDropdowns.includes(challenge.id) ? 200 : 0, opacity: openDropdowns.includes(challenge.id) ? 1 : 0}}>
+            {openDropdowns.includes(challenge.id) && (
               <div className="rounded-b-2xl rounded-t-none bg-rose-100 px-6 py-4" style={{marginTop: 0}}>
                 <div className="flex items-center gap-3 mb-2">
                   {/* Stars */}
@@ -63,6 +59,7 @@ export default function ChallengeList({ challenges, onSelect }) {
           </div>
         </div>
       ))}
+      </div>
     </div>
   );
 }

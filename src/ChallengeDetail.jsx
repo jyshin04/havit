@@ -8,13 +8,7 @@ export default function ChallengeDetail({ challenge, onBack, onJoin, joined }) {
       {/* Responsive background image fill for ChallengeDetail */}
       <div className="w-full aspect-[16/9] md:aspect-[2/1] overflow-hidden">
         <img
-          src={(() => {
-            if (challenge.product.toLowerCase().includes('shiseido')) return '/shiseido-background.webp';
-            if (challenge.product.toLowerCase().includes('medicube')) return '/medicube-background.jpg';
-            if (challenge.product.toLowerCase().includes("paula")) return '/paula-background.avif';
-            if (challenge.product.toLowerCase().includes('amazon')) return '/amazon-background.png';
-            return challenge.image;
-          })()}
+          src={challenge.backgroundImage || challenge.image}
           alt={challenge.product}
           className="w-full h-full object-cover object-center"
         />

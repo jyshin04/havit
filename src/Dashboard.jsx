@@ -42,7 +42,7 @@ function getShortName(name) {
   return nameMap[name] || name;
 }
 
-export default function Dashboard({ challenge, progress, onUpload, completion, onComplete, joinedChallenges = [], onSwitchChallenge }) {
+export default function Dashboard({ challenge, progress, onUpload, completion, onComplete, joinedChallenges = [], onSwitchChallenge, onLeaveChallenge }) {
   // --- Calendar date selection state ---
   const [selectedDate, setSelectedDate] = useState(() => {
     const uploads = progress || {};
@@ -78,7 +78,7 @@ export default function Dashboard({ challenge, progress, onUpload, completion, o
   const year = calendarStart.getFullYear();
   const month = calendarStart.getMonth();
   const monthDays = getMonthDays(year, month);
-  const monthName = calendarStart.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const monthName = calendarStart.toLocaleString('default', { month: 'long' });
 
   // Only allow next/prev month if within challenge period
   const canPrev = monthIdx > 0;
@@ -114,16 +114,16 @@ export default function Dashboard({ challenge, progress, onUpload, completion, o
   }, [dropdownOpen]);
   
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl p-12">
-      {/* Challenge selection dropdown */}
-      <div className="flex flex-col items-center mb-6">
-        {/* New Challenge Dropdown Title Style */}
-        <div className="w-full flex flex-col items-center mb-2 relative" ref={dropdownRef}>
-          <button
-            className="flex items-center w-full max-w-sm mx-auto px-6 py-3 rounded-full bg-rose-400 shadow font-bold text-white text-sm justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-rose-300 transition"
-            onClick={() => hasMultiple && setDropdownOpen(o => !o)}
-            style={{minHeight:'44px'}}
-          >
+    <div className="w-full min-h-screen mt-0 pb-8 bg-white p-4 md:p-8">
+        {/* Challenge selection dropdown */}
+        <div className="flex flex-col items-center mb-6">
+          {/* New Challenge Dropdown Title Style */}
+          <div className="w-full flex flex-col items-center mb-2 relative" ref={dropdownRef}>
+            <button
+              className="flex items-center w-full max-w-sm mx-auto px-6 py-3 rounded-full bg-rose-400 shadow font-bold text-white text-sm justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-rose-300 transition"
+              onClick={() => hasMultiple && setDropdownOpen(o => !o)}
+              style={{minHeight:'44px'}}
+            >
             <span className="truncate text-white font-bold text-sm text-center w-full">{getShortName(challenge.product)}</span>
             {hasMultiple && (
               <svg className={`w-5 h-5 ml-2 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="white" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -163,6 +163,7 @@ export default function Dashboard({ challenge, progress, onUpload, completion, o
             You've completed the challenge! Points will be credited shortly.
           </div>
         )}
+        
       </div>
       
       {/* Camera component for taking photos */}
@@ -231,74 +232,60 @@ export default function Dashboard({ challenge, progress, onUpload, completion, o
       
       {/* Calendar and progress section */}
       <div className="mt-6">
-        {/* Selected date image preview */}
-        {selectedDate && uploads[selectedDate] && (
-          <div className="flex flex-col items-center mb-4 animate-fadein">
-            <img src={uploads[selectedDate].url} alt="Upload" className="w-32 h-32 rounded-xl object-cover mb-1" />
-            <span className="text-xs text-gray-500">Uploaded {new Date(uploads[selectedDate].ts).toLocaleString()}</span>
-          </div>
-        )}
 
-        <div className="flex flex-row w-full h-full min-h-[220px]">
+
+        <div className="flex flex-row w-full h-full min-h-[220px] px-4 md:px-12 pb-8 justify-center gap-x-12">
           {/* Calendar - left half */}
-          <div className="flex flex-col flex-1 w-1/2 min-w-0 pr-2 justify-center">
+          <div className="flex flex-col w-auto justify-center">
             {/* Month navigation */}
-            <div className="flex items-center justify-center mb-2 gap-2">
+            <div className="flex items-center justify-center mb-2 gap-20">
               <button
-                className={`p-1 rounded-full ${canPrev ? 'bg-rose-100 hover:bg-rose-200' : 'bg-gray-100 cursor-not-allowed'}`}
+                className="flex items-center justify-center w-8 h-8"
                 disabled={!canPrev}
                 onClick={() => setMonthIdx(i => i - 1)}
                 aria-label="Previous Month"
+                style={{ marginRight: 32 }}
               >
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#e11d48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+                  <path d="M15 19l-7-7 7-7" stroke={canPrev ? "#e11d48" : "#d1d5db"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
-              <span className="block font-medium text-gray-700 min-w-[120px] text-center">{monthName}</span>
+              <span className="block font-semibold text-black min-w-[80px] text-center text-lg select-none">{monthName}</span>
               <button
-                className={`p-1 rounded-full ${canNext ? 'bg-rose-100 hover:bg-rose-200' : 'bg-gray-100 cursor-not-allowed'}`}
+                className="flex items-center justify-center w-8 h-8"
                 disabled={!canNext}
                 onClick={() => setMonthIdx(i => i + 1)}
                 aria-label="Next Month"
+                style={{ marginLeft: 32 }}
               >
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="#e11d48" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7" stroke={canNext ? "#e11d48" : "#d1d5db"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             </div>
             {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-2 text-xs">
-              {monthDays.map((date, i) => {
-                const key = date.toDateString();
-                const upload = uploads[key];
-                const inChallenge = isChallengeDay(date);
-                const isLast = isLastChallengeDay(date);
-                const isSelected = selectedDate === key;
-                // Animation for today's upload
-                const isTodayUpload = key === todayStr && !!todayUpload;
-                let bg = 'bg-gray-50';
-                let text = 'text-gray-700';
-                let font = '';
-                if (upload) {
-                  bg = 'bg-rose-400';
-                  text = 'text-white';
-                  font = 'font-bold';
-                } else if (inChallenge) {
-                  bg = 'bg-rose-50';
-                  text = 'text-rose-500';
-                  font = 'font-semibold';
-                }
-                if (isLast) {
-                  bg = 'bg-rose-200';
-                  font = 'font-bold';
-                }
-                // Attach ref only to today's cell in current month
-                const ref = (key === todayStr && month === today.getMonth() && year === today.getFullYear()) ? calendarCellRef : undefined;
+              {getMonthDays(year, month).map((date) => {
+                const dateStr = date.toDateString();
+                const isSelected = selectedDate === dateStr;
+                const isToday = new Date().toDateString() === dateStr;
+                const isUploaded = uploads[dateStr];
+                const isChallengeDay = date >= start && date <= end;
                 return (
-                  <div
-                    key={key}
-                    ref={ref}
-                    className={`rounded-lg border flex flex-col items-center justify-center aspect-square cursor-pointer ${key === todayStr ? 'border-rose-400' : 'border-gray-200'} ${bg} ${text} ${font} ${isTodayUpload ? 'animate-pop' : ''}`}
-                    onClick={() => upload && setSelectedDate(key)}
+                  <button
+                    key={dateStr}
+                    className={`w-10 h-10 flex items-center justify-center font-semibold text-sm transition
+                      ${isChallengeDay ? "text-gray-800" : "text-gray-300"}
+                      ${isSelected ? "bg-rose-400 text-white" : isUploaded ? "bg-rose-100 text-rose-500" : isToday ? "border border-rose-400" : ""}
+                      ${isChallengeDay ? "hover:bg-rose-50" : ""}
+                      rounded-full
+                    `}
+                    style={{ outline: isSelected ? "2px solid #f87171" : undefined }}
+                    onClick={() => setSelectedDate(dateStr)}
+                    disabled={!isChallengeDay}
                   >
                     <span>{date.getDate()}</span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -306,31 +293,76 @@ export default function Dashboard({ challenge, progress, onUpload, completion, o
           {/* Vertical divider */}
           <div className="w-px bg-gray-200 mx-2 h-auto min-h-[140px] self-stretch" />
           {/* Progress circle - right half */}
-          <div className="flex flex-col flex-1 w-1/2 min-w-0 items-center justify-center pl-2">
-            {/* SVG progress circle */}
-            <div className="relative w-36 h-36 mb-2">
-              <svg className="absolute top-0 left-0" width="140" height="140">
-                <circle cx="70" cy="70" r="62" fill="none" stroke="#f3f4f6" strokeWidth="14" />
-                <circle
-                  cx="70" cy="70" r="62"
-                  fill="none"
-                  stroke="#f87171"
-                  strokeWidth="14"
-                  strokeDasharray={2 * Math.PI * 62}
-                  strokeDashoffset={2 * Math.PI * 62 * (1 - percent / 100)}
-                  strokeLinecap="round"
-                  style={{ transition: 'stroke-dashoffset 0.5s' }}
+          <div className="flex flex-col w-auto items-center justify-center">
+            {/* Progress or photo-in-circle display */}
+            {selectedDate && uploads[selectedDate] ? null : (
+              <>
+                <div className="relative w-48 h-48 mb-2">
+                  <svg className="absolute top-0 left-0" width="180" height="180">
+                    <circle cx="90" cy="90" r="82" fill="none" stroke="#f3f4f6" strokeWidth="18" />
+                    <circle
+                      cx="90" cy="90" r="82"
+                      fill="none"
+                      stroke="#f87171"
+                      strokeWidth="18"
+                      strokeDasharray={2 * Math.PI * 82}
+                      strokeDashoffset={2 * Math.PI * 82 * (1 - percent / 100)}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.5s' }}
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-rose-500">{percent}%</span>
+                </div>
+                {/* Days remaining indicator */}
+                <div className="mt-1 text-gray-700 font-semibold text-base">
+                  {Math.max(0, totalDays - completed)} Days Left
+                </div>
+              </>
+            )}
+            {/* Photo info below the circle if a date is selected */}
+            {selectedDate && uploads[selectedDate] && (
+              <>
+                {/* Overlay to capture any click and deselect the date */}
+                <div
+                  className="fixed inset-0 z-30 cursor-pointer"
+                  style={{ background: 'transparent' }}
+                  onClick={() => setSelectedDate(null)}
+                  aria-label="Close photo preview"
                 />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-rose-500">{percent}%</span>
-            </div>
-            {/* Days remaining indicator */}
-            <div className="mt-1 text-gray-700 font-semibold text-base">
-              {Math.max(0, totalDays - completed)} Days Left
-            </div>
+                <div className="relative w-48 h-48 mb-2 z-40">
+                  <img
+                    src={uploads[selectedDate].url}
+                    alt="Upload"
+                    className="absolute inset-0 w-full h-full object-cover rounded-full shadow-lg"
+                    style={{ zIndex: 1 }}
+                  />
+                </div>
+                <div className="flex flex-col items-center mt-2 animate-fadein z-40">
+                  <span className="text-xs text-black mb-1 font-normal">Uploaded {new Date(uploads[selectedDate].ts).toLocaleString()}</span>
+                  <span className="text-xs text-black font-normal">
+                    <span className="font-bold">Day {Math.round((new Date(selectedDate) - start) / (1000*60*60*24)) + 1}</span> of {totalDays}
+                  </span>
+                  <button
+                    className="mt-3 px-4 py-1 rounded bg-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-300 border border-gray-300 shadow"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this upload? This action cannot be undone and will decrease your challenge progress.')) {
+                        // Remove the upload for this date
+                        if (typeof onUpload === 'function') {
+                          onUpload(selectedDate, null); // Passing null signals deletion
+                        }
+                        setSelectedDate(null);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
+
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useRef } from "react";
 
 // CameraCircle: main camera UI component
 //
@@ -9,52 +9,38 @@ import React, { forwardRef, useEffect, useRef, useState } from "react";
 
 const CameraCircle = forwardRef(function CameraCircle({ size = 320, onCapture, frozenPhoto = null, disabled = false, showRing = false }, ref) {
   const videoRef = useRef();
-  const [error, setError] = useState(null);
-  const [streaming, setStreaming] = useState(false);
 
+  // Start live camera on mount
   useEffect(() => {
     let stream;
+    const video = videoRef.current;
     async function startCamera() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          setStreaming(true);
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        if (video) {
+          video.srcObject = stream;
         }
       } catch (err) {
-        setError("Camera access denied or unavailable.");
+        // Optionally handle error (e.g., show fallback UI)
+        console.error("Camera access denied or not available", err);
       }
     }
     startCamera();
     return () => {
-      if (stream && stream.getTracks) {
+      if (stream) {
         stream.getTracks().forEach(track => track.stop());
+      }
+      if (video) {
+        video.srcObject = null;
       }
     };
   }, []);
 
-  // Force camera to resume when frozenPhoto is cleared
-  useEffect(() => {
-    if (!frozenPhoto && !streaming && !error) {
-      // Try to restart camera
-      async function restartCamera() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            setStreaming(true);
-          }
-        } catch (err) {
-          setError("Camera access denied or unavailable.");
-        }
-      }
-      restartCamera();
-    }
-  }, [frozenPhoto, streaming, error]);
-
   function handleCapture() {
     if (!videoRef.current) return;
     const video = videoRef.current;
+    // Pause the video to "freeze" the frame
+    video.pause();
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
@@ -70,6 +56,13 @@ const CameraCircle = forwardRef(function CameraCircle({ size = 320, onCapture, f
     if (onCapture) onCapture(dataUrl);
   }
 
+  // Resume video when frozenPhoto is cleared
+  useEffect(() => {
+    if (!frozenPhoto && videoRef.current) {
+      videoRef.current.play().catch(() => {}); // resume live feed
+    }
+  }, [frozenPhoto]);
+
   // Support ref forwarding for animation overlay
   const containerRef = useRef();
   React.useImperativeHandle(ref, () => ({
@@ -77,6 +70,7 @@ const CameraCircle = forwardRef(function CameraCircle({ size = 320, onCapture, f
     async capturePhoto() {
       if (!videoRef.current) return null;
       const video = videoRef.current;
+      video.pause(); // Freeze the frame
       const canvas = document.createElement("canvas");
       canvas.width = size;
       canvas.height = size;
@@ -86,7 +80,13 @@ const CameraCircle = forwardRef(function CameraCircle({ size = 320, onCapture, f
       ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
       ctx.closePath();
       ctx.clip();
-      ctx.drawImage(video, 0, 0, size, size);
+      // Crop the largest possible centered square from the video
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const side = Math.min(vw, vh);
+      const sx = (vw - side) / 2;
+      const sy = (vh - side) / 2;
+      ctx.drawImage(video, sx, sy, side, side, 0, 0, size, size);
       ctx.restore();
       return canvas.toDataURL("image/png");
     }
@@ -121,37 +121,29 @@ const CameraCircle = forwardRef(function CameraCircle({ size = 320, onCapture, f
             />
           </svg>
         )}
-        {error ? (
-          <div className="flex items-center justify-center w-full h-full text-rose-600 font-semibold text-center px-4">
-            {error}
-          </div>
-        ) : (
-          <>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              width={size}
-              height={size}
-              className="object-cover w-full h-full"
-              style={{ borderRadius: "50%" }}
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            width={size}
+            height={size}
+            className="object-cover w-full h-full"
+            style={{ borderRadius: "50%" }}
+          >
+            Your browser does not support the video tag.
+          </video>
+          {frozenPhoto && (
+            <img
+              src={frozenPhoto}
+              alt="Frozen"
+              className="absolute inset-0 object-cover w-full h-full"
+              style={{ borderRadius: "50%", zIndex: 2 }}
             />
-            {frozenPhoto && (
-              <img
-                src={frozenPhoto}
-                alt="Frozen"
-                className="absolute inset-0 object-cover w-full h-full"
-                style={{ borderRadius: "50%", zIndex: 2 }}
-              />
-            )}
-          </>
-        )}
-        {!streaming && !error && !frozenPhoto && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/70 text-gray-500 font-semibold">
-            Loading camera…
-          </div>
-        )}
+          )}
+        </>
+
       </div>
 
     </div>
